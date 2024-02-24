@@ -59,15 +59,4 @@ Records Grab_Emp_Record(fstream &empin) {
     }
 }
 
-void initBucket(int startOffset, fstream &dataFile){
-        // Seek to the appropriate position at the end of the current page
-        dataFile.seekp(startOffset - sizeof(int));
-        int initFreeSpace = 0;
-        int initRecordNumInPage = 0;
-        int minPointer = 0;
-        dataFile.write(reinterpret_cast<const char*>(&minPointer), sizeof(int));
-        dataFile.write(reinterpret_cast<const char*>(&initRecordNumInPage), sizeof(int));
-        dataFile.write(reinterpret_cast<const char*>(&initFreeSpace), sizeof(int));
-        
-}
 
