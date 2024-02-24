@@ -124,7 +124,6 @@ void Sort_Buffer(Records buffers[], fstream &runFile){
 
     // Sort records in the buffer
     sortRecordsByEmployeeId();
-    // Create run page 
     
     // Insert records into the Run page
     writeRecordToFile(buffers, 0, 0, runFile);
