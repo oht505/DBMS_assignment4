@@ -80,10 +80,14 @@ void writeRecordToFile(Records buffers[], int startOffset, int bufferIdx, fstrea
     int minPointer;
     int recordLength = serializedRecord.size();
 
+    // cout<<recordLength<<endl;
+    // cout<<serializedRecord<<endl;
+
+    // Get minPointer, RecordNumInpage, nextFreeSpace pointer
     runFile.seekg(startOffset + BLOCK_SIZE - sizeof(int)*3);
-    runFile.read(reinterpret_cast<char*>(&minPointer), sizeof(int));
-    runFile.read(reinterpret_cast<char*>(&RecordNumInPage), sizeof(int));
-    runFile.read(reinterpret_cast<char*>(&nextFreeSpace), sizeof(int));
+    runFile.read(reinterpret_cast<char*>(&minPointer), sizeof(minPointer));
+    runFile.read(reinterpret_cast<char*>(&RecordNumInPage), sizeof(RecordNumInPage));
+    runFile.read(reinterpret_cast<char*>(&nextFreeSpace), sizeof(nextFreeSpace));
 
     // Write the serialized record to the file
     runFile.write(serializedRecord.c_str(), sizeof(serializedRecord.size()));
@@ -109,7 +113,7 @@ void createRunPage(int startOffset, fstream &dataFile){
         dataFile.seekp(startOffset + BLOCK_SIZE - 3*sizeof(int));
         int initFreeSpace = 0;
         int initRecordNumInPage = 0;
-        int minPointer = 0;
+        int minPointer = -1;
         dataFile.write(reinterpret_cast<const char*>(&minPointer), sizeof(int));
         dataFile.write(reinterpret_cast<const char*>(&initRecordNumInPage), sizeof(int));
         dataFile.write(reinterpret_cast<const char*>(&initFreeSpace), sizeof(int));
@@ -126,7 +130,7 @@ void Sort_Buffer(Records buffers[], fstream &runFile){
     sortRecordsByEmployeeId();
     
     // Insert records into the Run page
-    writeRecordToFile(buffers, 0, 0, runFile);
+    
 
     // Write the Run page to the Run File
     
@@ -175,7 +179,7 @@ int main() {
         cerr << "Error opening the file to write" << endl;
         return 1;
     }    
-    // 0. create an initial Run page
+    // 0. create an initial Run page at the first page in the file
     createRunPage(0, Runs);
 
     //1-1. Fill buffer with 22 employee records
@@ -184,7 +188,7 @@ int main() {
     //1-2. Sort records in the buffer and write to the Run File
     Sort_Buffer(buffers, Runs);
     //PrintBufferEmployeeInfo();
-    
+    writeRecordToFile(buffers, 0, 0, Runs);
     //2. Use Merge_Runs() to Sort the runs of Emp relations 
 
 
