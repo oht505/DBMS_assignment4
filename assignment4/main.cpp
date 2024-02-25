@@ -73,7 +73,7 @@ string serialize(Records empInfo)
     return serializedRecord.str();
 }
 
-void writeRecordToFile(Records buffers[], int startOffset, int bufferIdx, fstream &runFile){
+void writeRecordToFile(Records buffers[], int bufferIdx, int startOffset, fstream &runFile){
     string serializedRecord = serialize(buffers[bufferIdx]);
     int nextFreeSpace;
     int RecordNumInPage;
@@ -81,19 +81,22 @@ void writeRecordToFile(Records buffers[], int startOffset, int bufferIdx, fstrea
     int recordLength = serializedRecord.size();
 
     // cout<<recordLength<<endl;
-    // cout<<serializedRecord<<endl;
-
+    cout<<serializedRecord<<endl;
+    cout<<serializedRecord.c_str()<<endl;
+    cout<<serializedRecord.size()<<endl;
+    
     // Get minPointer, RecordNumInpage, nextFreeSpace pointer
     runFile.seekg(startOffset + BLOCK_SIZE - sizeof(int)*3);
-    runFile.read(reinterpret_cast<char*>(&minPointer), sizeof(minPointer));
-    runFile.read(reinterpret_cast<char*>(&RecordNumInPage), sizeof(RecordNumInPage));
-    runFile.read(reinterpret_cast<char*>(&nextFreeSpace), sizeof(nextFreeSpace));
+    runFile.read(reinterpret_cast<char*>(&minPointer), sizeof(int));
+    runFile.read(reinterpret_cast<char*>(&RecordNumInPage), sizeof(int));
+    runFile.read(reinterpret_cast<char*>(&nextFreeSpace), sizeof(int));
 
     // Write the serialized record to the file
+    runFile.seekp(startOffset + nextFreeSpace);
     runFile.write(serializedRecord.c_str(), sizeof(serializedRecord.size()));
 
     // Add slot (offset, recold)
-    runFile.seekp(startOffset + BLOCK_SIZE - (sizeof(int)*3+sizeof(int)*2*(RecordNumInPage+1)));
+    runFile.seekp(startOffset + BLOCK_SIZE - (sizeof(int)*3 + sizeof(int)*2*(RecordNumInPage+1)));
     runFile.write(reinterpret_cast<char*>(&nextFreeSpace), sizeof(int));
     runFile.write(reinterpret_cast<char*>(&recordLength), sizeof(int));
     
@@ -174,7 +177,7 @@ int main() {
 
     //1. Create runs for Emp which are sorted using Sort_Buffer()
     fstream Runs;
-    Runs.open("run.csv", ios::out | ios::binary);
+    Runs.open("run", ios::in | ios:: trunc | ios::out | ios::binary);
     if(!Runs.is_open()){
         cerr << "Error opening the file to write" << endl;
         return 1;
@@ -189,6 +192,20 @@ int main() {
     Sort_Buffer(buffers, Runs);
     //PrintBufferEmployeeInfo();
     writeRecordToFile(buffers, 0, 0, Runs);
+
+    char page[100]={};
+    Runs.read(page, sizeof(page));
+
+    int empId = 0;
+    char empName[40]={};
+    int age = 0;
+    double salary = 0.0;
+
+    memcpy(&empId, page, sizeof(int));
+    memcpy(&empName, page+4, sizeof(int)*2);
+    cout<<empName<<endl;
+    cout<<empId<<endl;
+
     //2. Use Merge_Runs() to Sort the runs of Emp relations 
 
 
