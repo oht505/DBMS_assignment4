@@ -54,7 +54,6 @@ void FillBufferFromFile(Records buffers[], fstream &dataFile){
         // For checking the total number of records
         buffers->number_of_emp_records++;
     }
-
 }
 
 void PrintBufferEmployeeInfo(){
@@ -214,8 +213,9 @@ int main() {
     totalNumRecords = countNumRecordsInFile(empin);
     totalNumPages = totalNumRecords / 22 + (totalNumRecords % 22 != 0);
 
-    // Clear flags and Move reading pointer at the beginning of the file
+    // Clear flags 
     empin.clear();
+    // Move reading pointer at the beginning of the file
     empin.seekg(0, ios::beg);
 
     //Creating the EmpSorted.csv file where we will store our sorted results
