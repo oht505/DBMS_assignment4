@@ -204,7 +204,7 @@ int main() {
         cerr << "Error opening file"<<endl;
         return 1;
     }
-   
+
     //Creating the EmpSorted.csv file where we will store our sorted results
     fstream SortOut;
     SortOut.open("EmpSorted.csv", ios::out | ios::app);
@@ -212,7 +212,7 @@ int main() {
         cerr << "Error opening the file to write"<<endl;
         return 1;
     }
-
+    //
     //1. Create runs for Emp which are sorted using Sort_Buffer()
     fstream Runs("run", ios::in | ios:: trunc | ios::out | ios::binary);
     if(!Runs.is_open()){
