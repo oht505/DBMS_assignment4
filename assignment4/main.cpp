@@ -161,6 +161,41 @@ void PrintSorted(){
     return;
 }
 
+
+void SearchRecord(int startOffset, fstream &runFile, int n){
+    int slotOffset;
+    int recordLength;
+    int RecordNumInPage;
+    int minPointer;
+
+
+    runFile.seekg(startOffset + BLOCK_SIZE - sizeof(int)*3);
+    runFile.read(reinterpret_cast<char*>(&minPointer), sizeof(int));
+    runFile.read(reinterpret_cast<char*>(&RecordNumInPage), sizeof(int));
+
+
+    runFile.seekg(startOffset + BLOCK_SIZE - sizeof(int)*3 - (n+1)*2*sizeof(int));
+    runFile.read(reinterpret_cast<char*>(&recordLength), sizeof(int));
+    runFile.read(reinterpret_cast<char*>(&slotOffset), sizeof(int));
+
+    cout << recordLength <<"\n"<< slotOffset <<endl;
+
+    int eid;
+    string ename;
+    int age;
+    double salary;
+    runFile.seekg(startOffset + slotOffset);
+    runFile.read(reinterpret_cast<char*>(&eid), sizeof(int));
+    std::getline(runFile, ename, ',');
+
+
+
+    cout << "eid : " << eid << "ename : " << ename <<"\n";
+
+
+
+}
+
 int main() {
 
     //Open file streams to read and write
@@ -171,7 +206,7 @@ int main() {
         cerr << "Error opening file"<<endl;
         return 1;
     }
-   
+
     //Creating the EmpSorted.csv file where we will store our sorted results
     fstream SortOut;
     SortOut.open("EmpSorted.csv", ios::out | ios::app);
@@ -179,10 +214,9 @@ int main() {
         cerr << "Error opening the file to write"<<endl;
         return 1;
     }
-
+    //
     //1. Create runs for Emp which are sorted using Sort_Buffer()
-    fstream Runs;
-    Runs.open("run", ios::in | ios:: trunc | ios::out | ios::binary);
+    fstream Runs("run", ios::in | ios:: trunc | ios::out | ios::binary);
     if(!Runs.is_open()){
         cerr << "Error opening the file to write" << endl;
         return 1;
@@ -203,7 +237,7 @@ int main() {
 
 
     //Please delete the temporary files (runs) after you've sorted the Emp.csv
-
+    SearchRecord(0, Runs, 0);
 
 
     empin.close();
