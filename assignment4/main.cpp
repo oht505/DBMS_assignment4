@@ -34,13 +34,14 @@ int countNumRecordsInFile(istream& inputFile){
 }
 
 void FillBufferFromFile(Records buffers[], fstream &dataFile){
-
+    
     // Grab 22 employ records from the file
     for(int i=0; i<buffer_size; i++){
-        // Get one record 
+        
+        // Get one record from the file
         Records empRecord = Grab_Emp_Record(dataFile);
 
-        // No more records in the file
+        // No more records in the file and finish loops
         if(empRecord.no_values == -1){
             break;
         }
@@ -51,7 +52,7 @@ void FillBufferFromFile(Records buffers[], fstream &dataFile){
         buffers[i].emp_record.ename = empRecord.emp_record.ename;
         buffers[i].emp_record.salary = empRecord.emp_record.salary;
 
-        // For checking the total number of records
+        // For checking the total number of records(No meanings)
         buffers->number_of_emp_records++;
     }
 }
