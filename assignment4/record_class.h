@@ -37,8 +37,8 @@ class Records{
         emp_record.ename = ename;
         emp_record.age = age;
         emp_record.salary = salary;
-        //number_of_emp_records++;
     }
+    //default Controller
 
     Records(){};
 
@@ -70,5 +70,6 @@ Records Grab_Emp_Record(fstream &empin) {
         return emp;
     }
 }
+
 
 

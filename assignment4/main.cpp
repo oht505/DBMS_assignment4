@@ -22,19 +22,66 @@ using namespace std;
 
 Records buffers[buffer_size]; //use this class object of size 22 as your main memory
 
-void FillBufferFromFile(Records buffers[buffer_size], fstream &dataFile){
-    
-    // Grab 22 employ records from the file
-    for(int i=0; i<buffer_size; i++){
-        // Get one record 
-        Records empRecord = Grab_Emp_Record(dataFile);
 
+Records getMinRecord(fstream &runFile){
+    int slotOffset;
+    int recordLength;
+    int RecordNumInPage;
+    int minPointer;
+    //int numRecordsInBuffer = records.number_of_emp_records;
+
+    for(int i=0; i<1; i++){
+        int startOffset = 0; //i*BLOCK_SIZE;
+
+        runFile.seekg(startOffset + BLOCK_SIZE - sizeof(int)*3);
+        runFile.read(reinterpret_cast<char*>(&minPointer), sizeof(int));
+        runFile.read(reinterpret_cast<char*>(&RecordNumInPage), sizeof(int));
+        cout << "minPointer" <<minPointer;
+
+        runFile.seekg(startOffset + BLOCK_SIZE - sizeof(int)*3 - (minPointer+1)*2*sizeof(int));
+        runFile.read(reinterpret_cast<char*>(&slotOffset), sizeof(int));
+        runFile.read(reinterpret_cast<char*>(&recordLength), sizeof(int));
+
+        cout << "slotOffset" <<slotOffset << "\n";
+        cout << "recordLength" <<recordLength << "\n";
+
+        int eid;
+        string ename;
+        int age;
+        double salary;
+
+        runFile.seekg(0);
+        runFile.read(reinterpret_cast<char*>(&eid), sizeof(int));
+        std::getline(runFile, ename, ',');
+        runFile.read(reinterpret_cast<char*>(&age), sizeof(int));
+        runFile.read(reinterpret_cast<char*>(&salary), sizeof(double));
+
+        cout <<"eid : " << eid <<"\n";
+        cout <<"ename : " << ename<<"\n";
+        cout <<"age : " << age<<"\n";
+        cout <<"salary : " << salary<<"\n";
+        eid = 123;
+        return Records(eid,ename,age,salary);
+
+    }
+    return Records();
+}
+
+
+void fillBufferFromFile(Records buffers[buffer_size], fstream &dataFile,int n, bool isPassOne){
+
+    // Grab 22 employ records from the file
+    for(int i=0; i<n; i++){
+        Records empRecord;
+        // Get one record
+        if(isPassOne) empRecord = Grab_Emp_Record(dataFile);
+        else empRecord = getMinRecord(dataFile);
         // No more records in the file
         if(empRecord.no_values == -1){
             break;
         }
 
-        // Insert each field data into emp_record 
+        // Insert each field data into emp_record
         buffers[i].emp_record.age = empRecord.emp_record.age;
         buffers[i].emp_record.eid = empRecord.emp_record.eid;
         buffers[i].emp_record.ename = empRecord.emp_record.ename;
@@ -43,7 +90,6 @@ void FillBufferFromFile(Records buffers[buffer_size], fstream &dataFile){
         // For checking the total number of records
         buffers->number_of_emp_records += 1;
     }
-
 }
 
 void PrintBufferEmployeeInfo(){
@@ -66,9 +112,9 @@ void sortRecordsByEmployeeId(){
 string serialize(Records empInfo)
 {
     ostringstream serializedRecord;
-    serializedRecord.write(reinterpret_cast<const char *>(&empInfo.emp_record.eid), sizeof(int))<< ',';                 
+    serializedRecord.write(reinterpret_cast<const char *>(&empInfo.emp_record.eid), sizeof(int));
     serializedRecord << empInfo.emp_record.ename <<',';                                                                
-    serializedRecord.write(reinterpret_cast<const char*>(&empInfo.emp_record.age), sizeof(int)) << ',';                                                                 // serialize string bio, variable length
+    serializedRecord.write(reinterpret_cast<const char*>(&empInfo.emp_record.age), sizeof(int)) ;                                                                 // serialize string bio, variable length
     serializedRecord.write(reinterpret_cast<const char *>(&empInfo.emp_record.salary), sizeof(double)); 
     return serializedRecord.str();
 }
@@ -93,7 +139,7 @@ void writeRecordToFile(Records buffers[], int bufferIdx, int startOffset, fstrea
 
     // Write the serialized record to the file
     runFile.seekp(startOffset + nextFreeSpace);
-    runFile.write(serializedRecord.c_str(), sizeof(serializedRecord));
+    runFile.write(serializedRecord.c_str(), serializedRecord.size());
 
 
     // Add slot (offset, recold)
@@ -117,7 +163,7 @@ void createRunPage(int startOffset, fstream &dataFile){
         dataFile.seekp(startOffset + BLOCK_SIZE - 3*sizeof(int));
         int initFreeSpace = 0;
         int initRecordNumInPage = 0;
-        int minPointer = -1;
+        int minPointer = 0;
         dataFile.write(reinterpret_cast<const char*>(&minPointer), sizeof(int));
         dataFile.write(reinterpret_cast<const char*>(&initRecordNumInPage), sizeof(int));
         dataFile.write(reinterpret_cast<const char*>(&initFreeSpace), sizeof(int));
@@ -142,11 +188,31 @@ void Sort_Buffer(Records buffers[], fstream &runFile){
     return;
 }
 
+int findMinIndex(int excludedIdx){
+    int minIdx=0;
+    for(int i=1; i<buffer_size; i++){
+        if(excludedIdx!=-1 && i == excludedIdx)
+            continue;
+        if(buffers[minIdx].emp_record.eid > buffers[i].emp_record.eid)
+            minIdx= i;
+    }
+    return minIdx;
+}
+
+void moveMinToLast(){
+    int minIdx = findMinIndex(-1);
+
+
+}
+
+
 //PASS 2
 //Use main memory to Merge the Runs 
 //which are already sorted in 'runs' of the relation Emp.csv 
 void Merge_Runs(){
-    //and store the Sorted results of your Buffer using PrintSorted() 
+    //and store the Sorted results of your Buffer using PrintSorted()
+    fstream runs("run", ios::in);
+    fillBufferFromFile(buffers,runs,buffer_size,false);
 
     return;
 }
@@ -158,42 +224,7 @@ void PrintSorted(){
 }
 
 
-void SearchRecord(int numRecordsInBuffer/*records.number_of_emp_records 넘겨받을 예정 해당 함수 호출 후 number_of_emp_records-- */ , fstream &runFile){
-    int slotOffset;
-    int recordLength;
-    int RecordNumInPage;
-    int minPointer;
-    //int numRecordsInBuffer = records.number_of_emp_records;
 
-    for(int i=0; i<numRecordsInBuffer; i++){
-        int startOffset =  i*BLOCK_SIZE;
-
-        runFile.seekg(startOffset + BLOCK_SIZE - sizeof(int)*3);
-        runFile.read(reinterpret_cast<char*>(&minPointer), sizeof(int));
-        runFile.read(reinterpret_cast<char*>(&RecordNumInPage), sizeof(int));
-
-
-        runFile.seekg(startOffset + BLOCK_SIZE - sizeof(int)*3 - minPointer*2*sizeof(int));
-        runFile.read(reinterpret_cast<char*>(&recordLength), sizeof(int));
-        runFile.read(reinterpret_cast<char*>(&slotOffset), sizeof(int));
-
-
-        int eid;
-        string ename;
-        int age;
-        double salary;
-        runFile.seekg(startOffset + slotOffset);
-        runFile.read(reinterpret_cast<char*>(&eid), sizeof(int));
-        std::getline(runFile, ename, ',');
-        runFile.read(reinterpret_cast<char*>(&age), sizeof(int));
-        runFile.read(reinterpret_cast<char*>(&age), sizeof(double));
-
-
-
-    }
-
-
-}
 
 int main() {
 
@@ -224,7 +255,7 @@ int main() {
     createRunPage(0, Runs);
 
     //1-1. Fill buffer with 22 employee records
-    FillBufferFromFile(buffers, empin);
+    fillBufferFromFile(buffers, empin,buffer_size, true);
     
     //1-2. Sort records in the buffer and write to the Run File
     Sort_Buffer(buffers, Runs);
@@ -233,9 +264,10 @@ int main() {
 
 
     //2. Use Merge_Runs() to Sort the runs of Emp relations 
-
+    Merge_Runs();
 
     //Please delete the temporary files (runs) after you've sorted the Emp.csv
+
 
 
     empin.close();
