@@ -79,12 +79,11 @@ void writeRecordToFile(Records buffers[], int bufferIdx, int startOffset, fstrea
     int RecordNumInPage;
     int minPointer;
     int recordLength = serializedRecord.size();
-    char temp[100];
 
     // cout<<recordLength<<endl;
-    cout<<serializedRecord<<endl;
+    cout<<"serializedRecord: "<<serializedRecord<<endl;
     //cout<<serializedRecord.c_str()<<endl;
-    cout<<serializedRecord.size()<<endl;
+    cout<<"The size of serializedRecord: "<<serializedRecord.size()<<endl;
     
     // Get minPointer, RecordNumInpage, nextFreeSpace pointer
     runFile.seekg(startOffset + BLOCK_SIZE - sizeof(int)*3);
@@ -92,13 +91,10 @@ void writeRecordToFile(Records buffers[], int bufferIdx, int startOffset, fstrea
     runFile.read(reinterpret_cast<char*>(&RecordNumInPage), sizeof(int));
     runFile.read(reinterpret_cast<char*>(&nextFreeSpace), sizeof(int));
 
-    serializedRecord.c_str();
-    memcpy(&temp, &serializedRecord, sizeof(temp));
-
     // Write the serialized record to the file
     runFile.seekp(startOffset + nextFreeSpace);
-    //runFile.write(serializedRecord.c_str(), sizeof(serializedRecord.size()));
-    runFile.write(temp, sizeof(temp));
+    runFile.write(serializedRecord.c_str(), sizeof(serializedRecord));
+
 
     // Add slot (offset, recold)
     runFile.seekp(startOffset + BLOCK_SIZE - (sizeof(int)*3 + sizeof(int)*2*(RecordNumInPage+1)));
@@ -175,8 +171,8 @@ void SearchRecord(int startOffset, fstream &runFile, int n){
 
 
     runFile.seekg(startOffset + BLOCK_SIZE - sizeof(int)*3 - (n+1)*2*sizeof(int));
-    runFile.read(reinterpret_cast<char*>(&recordLength), sizeof(int));
     runFile.read(reinterpret_cast<char*>(&slotOffset), sizeof(int));
+    runFile.read(reinterpret_cast<char*>(&recordLength), sizeof(int));
 
     cout << recordLength <<"\n"<< slotOffset <<endl;
 
