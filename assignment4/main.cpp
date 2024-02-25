@@ -79,10 +79,11 @@ void writeRecordToFile(Records buffers[], int bufferIdx, int startOffset, fstrea
     int RecordNumInPage;
     int minPointer;
     int recordLength = serializedRecord.size();
+    char temp[100];
 
     // cout<<recordLength<<endl;
     cout<<serializedRecord<<endl;
-    cout<<serializedRecord.c_str()<<endl;
+    //cout<<serializedRecord.c_str()<<endl;
     cout<<serializedRecord.size()<<endl;
     
     // Get minPointer, RecordNumInpage, nextFreeSpace pointer
@@ -91,9 +92,13 @@ void writeRecordToFile(Records buffers[], int bufferIdx, int startOffset, fstrea
     runFile.read(reinterpret_cast<char*>(&RecordNumInPage), sizeof(int));
     runFile.read(reinterpret_cast<char*>(&nextFreeSpace), sizeof(int));
 
+    serializedRecord.c_str();
+    memcpy(&temp, &serializedRecord, sizeof(temp));
+
     // Write the serialized record to the file
     runFile.seekp(startOffset + nextFreeSpace);
-    runFile.write(serializedRecord.c_str(), sizeof(serializedRecord.size()));
+    //runFile.write(serializedRecord.c_str(), sizeof(serializedRecord.size()));
+    runFile.write(temp, sizeof(temp));
 
     // Add slot (offset, recold)
     runFile.seekp(startOffset + BLOCK_SIZE - (sizeof(int)*3 + sizeof(int)*2*(RecordNumInPage+1)));
@@ -193,18 +198,6 @@ int main() {
     //PrintBufferEmployeeInfo();
     writeRecordToFile(buffers, 0, 0, Runs);
 
-    char page[100]={};
-    Runs.read(page, sizeof(page));
-
-    int empId = 0;
-    char empName[40]={};
-    int age = 0;
-    double salary = 0.0;
-
-    memcpy(&empId, page, sizeof(int));
-    memcpy(&empName, page+4, sizeof(int)*2);
-    cout<<empName<<endl;
-    cout<<empId<<endl;
 
     //2. Use Merge_Runs() to Sort the runs of Emp relations 
 
