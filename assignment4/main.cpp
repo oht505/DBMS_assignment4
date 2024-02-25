@@ -157,36 +157,39 @@ void PrintSorted(){
 }
 
 
-void SearchRecord(int startOffset, fstream &runFile, int n){
+void SearchRecord(int numRecordsInBuffer/*records.number_of_emp_records 넘겨받을 예정 해당 함수 호출 후 number_of_emp_records-- */ , fstream &runFile){
     int slotOffset;
     int recordLength;
     int RecordNumInPage;
     int minPointer;
+    //int numRecordsInBuffer = records.number_of_emp_records;
+
+    for(int i=0; i<numRecordsInBuffer; i++){
+        int startOffset =  i*BLOCK_SIZE;
+
+        runFile.seekg(startOffset + BLOCK_SIZE - sizeof(int)*3);
+        runFile.read(reinterpret_cast<char*>(&minPointer), sizeof(int));
+        runFile.read(reinterpret_cast<char*>(&RecordNumInPage), sizeof(int));
 
 
-    runFile.seekg(startOffset + BLOCK_SIZE - sizeof(int)*3);
-    runFile.read(reinterpret_cast<char*>(&minPointer), sizeof(int));
-    runFile.read(reinterpret_cast<char*>(&RecordNumInPage), sizeof(int));
+        runFile.seekg(startOffset + BLOCK_SIZE - sizeof(int)*3 - minPointer*2*sizeof(int));
+        runFile.read(reinterpret_cast<char*>(&recordLength), sizeof(int));
+        runFile.read(reinterpret_cast<char*>(&slotOffset), sizeof(int));
 
 
-    runFile.seekg(startOffset + BLOCK_SIZE - sizeof(int)*3 - (n+1)*2*sizeof(int));
-    runFile.read(reinterpret_cast<char*>(&recordLength), sizeof(int));
-    runFile.read(reinterpret_cast<char*>(&slotOffset), sizeof(int));
-
-    cout << recordLength <<"\n"<< slotOffset <<endl;
-
-    int eid;
-    string ename;
-    int age;
-    double salary;
-    runFile.seekg(startOffset + slotOffset);
-    runFile.read(reinterpret_cast<char*>(&eid), sizeof(int));
-    std::getline(runFile, ename, ',');
+        int eid;
+        string ename;
+        int age;
+        double salary;
+        runFile.seekg(startOffset + slotOffset);
+        runFile.read(reinterpret_cast<char*>(&eid), sizeof(int));
+        std::getline(runFile, ename, ',');
+        runFile.read(reinterpret_cast<char*>(&age), sizeof(int));
+        runFile.read(reinterpret_cast<char*>(&age), sizeof(double));
 
 
 
-    cout << "eid : " << eid << "ename : " << ename <<"\n";
-
+    }
 
 
 }
@@ -244,7 +247,6 @@ int main() {
 
 
     //Please delete the temporary files (runs) after you've sorted the Emp.csv
-    SearchRecord(0, Runs, 0);
 
 
     empin.close();
