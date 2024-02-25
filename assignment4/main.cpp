@@ -22,8 +22,19 @@ using namespace std;
 
 Records buffers[buffer_size]; //use this class object of size 22 as your main memory
 
-void FillBufferFromFile(Records buffers[buffer_size], fstream &dataFile){
-    
+int countNumRecordsInFile(istream& inputFile){
+    int totalNumRecords = 0;
+    string line;
+
+    while(getline(inputFile, line, '\n')){
+        totalNumRecords++;
+    }
+
+    return totalNumRecords;
+}
+
+void FillBufferFromFile(Records buffers[], fstream &dataFile){
+
     // Grab 22 employ records from the file
     for(int i=0; i<buffer_size; i++){
         // Get one record 
@@ -41,7 +52,7 @@ void FillBufferFromFile(Records buffers[buffer_size], fstream &dataFile){
         buffers[i].emp_record.salary = empRecord.emp_record.salary;
 
         // For checking the total number of records
-        buffers->number_of_emp_records += 1;
+        buffers->number_of_emp_records++;
     }
 
 }
@@ -66,9 +77,9 @@ void sortRecordsByEmployeeId(){
 string serialize(Records empInfo)
 {
     ostringstream serializedRecord;
-    serializedRecord.write(reinterpret_cast<const char *>(&empInfo.emp_record.eid), sizeof(int))<< ',';                 
-    serializedRecord << empInfo.emp_record.ename <<',';                                                                
-    serializedRecord.write(reinterpret_cast<const char*>(&empInfo.emp_record.age), sizeof(int)) << ',';                                                                 // serialize string bio, variable length
+    serializedRecord.write(reinterpret_cast<const char *>(&empInfo.emp_record.eid), sizeof(int));                 
+    serializedRecord << empInfo.emp_record.ename;                                                                
+    serializedRecord.write(reinterpret_cast<const char*>(&empInfo.emp_record.age), sizeof(int));                                                                 // serialize string bio, variable length
     serializedRecord.write(reinterpret_cast<const char *>(&empInfo.emp_record.salary), sizeof(double)); 
     return serializedRecord.str();
 }
@@ -79,11 +90,6 @@ void writeRecordToFile(Records buffers[], int bufferIdx, int startOffset, fstrea
     int RecordNumInPage;
     int minPointer;
     int recordLength = serializedRecord.size();
-
-    // cout<<recordLength<<endl;
-    cout<<"serializedRecord: "<<serializedRecord<<endl;
-    //cout<<serializedRecord.c_str()<<endl;
-    cout<<"The size of serializedRecord: "<<serializedRecord.size()<<endl;
     
     // Get minPointer, RecordNumInpage, nextFreeSpace pointer
     runFile.seekg(startOffset + BLOCK_SIZE - sizeof(int)*3);
@@ -93,7 +99,7 @@ void writeRecordToFile(Records buffers[], int bufferIdx, int startOffset, fstrea
 
     // Write the serialized record to the file
     runFile.seekp(startOffset + nextFreeSpace);
-    runFile.write(serializedRecord.c_str(), sizeof(serializedRecord));
+    runFile.write(serializedRecord.c_str(), serializedRecord.size());
 
 
     // Add slot (offset, recold)
@@ -117,7 +123,7 @@ void createRunPage(int startOffset, fstream &dataFile){
         dataFile.seekp(startOffset + BLOCK_SIZE - 3*sizeof(int));
         int initFreeSpace = 0;
         int initRecordNumInPage = 0;
-        int minPointer = -1;
+        int minPointer = 0;
         dataFile.write(reinterpret_cast<const char*>(&minPointer), sizeof(int));
         dataFile.write(reinterpret_cast<const char*>(&initRecordNumInPage), sizeof(int));
         dataFile.write(reinterpret_cast<const char*>(&initFreeSpace), sizeof(int));
@@ -127,17 +133,16 @@ void createRunPage(int startOffset, fstream &dataFile){
 /***You can change return type and arguments as you want.***/
 //PASS 1
 //Sorting the buffers in main_memory and storing the sorted records into a temporary file (Runs) 
-void Sort_Buffer(Records buffers[], fstream &runFile){
+void Sort_Buffer(Records buffers[], int startOffset, fstream &runFile){
     //Remember: You can use only [AT MOST] 22 blocks for sorting the records / tuples and create the runs
 
     // Sort records in the buffer
     sortRecordsByEmployeeId();
     
-    // Insert records into the Run page
-    
-
-    // Write the Run page to the Run File
-    
+    // Insert 22 records into the Run page in the file
+    for(int bufferIdx=0; bufferIdx<buffer_size; bufferIdx++){
+        writeRecordToFile(buffers, bufferIdx, startOffset, runFile);
+    }
 
     return;
 }
@@ -193,15 +198,25 @@ void SearchRecord(int startOffset, fstream &runFile, int n){
 }
 
 int main() {
+    int totalNumRecords = 0;
+    int totalNumPages = 0;
 
     //Open file streams to read and write
     //Opening out the Emp.csv relation that we want to Sort
     fstream empin;
-    empin.open("Emp2.csv", ios::in);
+    empin.open("Emp.csv", ios::in);
     if(!empin.is_open()){
         cerr << "Error opening file"<<endl;
         return 1;
     }
+
+    // Total number of Records and Run Pages
+    totalNumRecords = countNumRecordsInFile(empin);
+    totalNumPages = totalNumRecords / 22 + (totalNumRecords % 22 != 0);
+
+    // Clear flags and Move reading pointer at the beginning of the file
+    empin.clear();
+    empin.seekg(0, ios::beg);
 
     //Creating the EmpSorted.csv file where we will store our sorted results
     fstream SortOut;
@@ -210,30 +225,29 @@ int main() {
         cerr << "Error opening the file to write"<<endl;
         return 1;
     }
-    //
+
     //1. Create runs for Emp which are sorted using Sort_Buffer()
     fstream Runs("run", ios::in | ios:: trunc | ios::out | ios::binary);
     if(!Runs.is_open()){
         cerr << "Error opening the file to write" << endl;
         return 1;
     }    
-    // 0. create an initial Run page at the first page in the file
-    createRunPage(0, Runs);
 
-    //1-1. Fill buffer with 22 employee records
-    FillBufferFromFile(buffers, empin);
-    
-    //1-2. Sort records in the buffer and write to the Run File
-    Sort_Buffer(buffers, Runs);
-    //PrintBufferEmployeeInfo();
-    writeRecordToFile(buffers, 0, 0, Runs);
+    for(int i=0; i<totalNumPages; i++){
+        //1-1. Create an Run page in the file
+        createRunPage(i*BLOCK_SIZE, Runs);
+        //1-2. Fill buffer with 22 employee records
+        FillBufferFromFile(buffers, empin);
+        //1-3. Sort records in the buffer and write to the Run File
+        Sort_Buffer(buffers, i*BLOCK_SIZE ,Runs);
+    }
 
 
     //2. Use Merge_Runs() to Sort the runs of Emp relations 
+    
 
 
     //Please delete the temporary files (runs) after you've sorted the Emp.csv
-    SearchRecord(0, Runs, 0);
 
 
     empin.close();
