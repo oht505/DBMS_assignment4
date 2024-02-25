@@ -22,52 +22,6 @@ using namespace std;
 
 Records buffers[buffer_size]; //use this class object of size 22 as your main memory
 
-
-Records getMinRecord(fstream &runFile){
-    int slotOffset;
-    int recordLength;
-    int RecordNumInPage;
-    int minPointer;
-    //int numRecordsInBuffer = records.number_of_emp_records;
-
-    for(int i=0; i<1; i++){
-        int startOffset = 0; //i*BLOCK_SIZE;
-
-        runFile.seekg(startOffset + BLOCK_SIZE - sizeof(int)*3);
-        runFile.read(reinterpret_cast<char*>(&minPointer), sizeof(int));
-        runFile.read(reinterpret_cast<char*>(&RecordNumInPage), sizeof(int));
-        cout << "minPointer" <<minPointer;
-
-        runFile.seekg(startOffset + BLOCK_SIZE - sizeof(int)*3 - (minPointer+1)*2*sizeof(int));
-        runFile.read(reinterpret_cast<char*>(&slotOffset), sizeof(int));
-        runFile.read(reinterpret_cast<char*>(&recordLength), sizeof(int));
-
-        cout << "slotOffset" <<slotOffset << "\n";
-        cout << "recordLength" <<recordLength << "\n";
-
-        int eid;
-        string ename;
-        int age;
-        double salary;
-
-        runFile.seekg(0);
-        runFile.read(reinterpret_cast<char*>(&eid), sizeof(int));
-        std::getline(runFile, ename, ',');
-        runFile.read(reinterpret_cast<char*>(&age), sizeof(int));
-        runFile.read(reinterpret_cast<char*>(&salary), sizeof(double));
-
-        cout <<"eid : " << eid <<"\n";
-        cout <<"ename : " << ename<<"\n";
-        cout <<"age : " << age<<"\n";
-        cout <<"salary : " << salary<<"\n";
-        eid = 123;
-        return Records(eid,ename,age,salary);
-
-    }
-    return Records();
-}
-
-
 void fillBufferFromFile(Records buffers[buffer_size], fstream &dataFile,int n, bool isPassOne){
 
     // Grab 22 employ records from the file
@@ -204,6 +158,77 @@ void moveMinToLast(){
 
 
 }
+
+void fillBufferFromFile(Records buffers[buffer_size], fstream &dataFile,int n, bool isPassOne){
+
+    // Grab 22 employ records from the file
+    for(int i=0; i<n; i++){
+        Records empRecord;
+        // Get one record
+        if(isPassOne) empRecord = Grab_Emp_Record(dataFile);
+        else empRecord = getMinRecord(dataFile);
+        // No more records in the file
+        if(empRecord.no_values == -1){
+            break;
+        }
+
+        // Insert each field data into emp_record
+        buffers[i].emp_record.age = empRecord.emp_record.age;
+        buffers[i].emp_record.eid = empRecord.emp_record.eid;
+        buffers[i].emp_record.ename = empRecord.emp_record.ename;
+        buffers[i].emp_record.salary = empRecord.emp_record.salary;
+
+        // For checking the total number of records
+        buffers->number_of_emp_records += 1;
+    }
+}
+
+
+Records getMinRecord(fstream &runFile){
+    int slotOffset;
+    int recordLength;
+    int RecordNumInPage;
+    int minPointer;
+    //int numRecordsInBuffer = records.number_of_emp_records;
+
+    for(int i=0; i<1; i++){
+        int startOffset = 0; //i*BLOCK_SIZE;
+
+        runFile.seekg(startOffset + BLOCK_SIZE - sizeof(int)*3);
+        runFile.read(reinterpret_cast<char*>(&minPointer), sizeof(int));
+        runFile.read(reinterpret_cast<char*>(&RecordNumInPage), sizeof(int));
+        cout << "minPointer" <<minPointer;
+
+        runFile.seekg(startOffset + BLOCK_SIZE - sizeof(int)*3 - (minPointer+1)*2*sizeof(int));
+        runFile.read(reinterpret_cast<char*>(&slotOffset), sizeof(int));
+        runFile.read(reinterpret_cast<char*>(&recordLength), sizeof(int));
+
+        cout << "slotOffset" <<slotOffset << "\n";
+        cout << "recordLength" <<recordLength << "\n";
+
+        int eid;
+        string ename;
+        int age;
+        double salary;
+
+        runFile.seekg(0);
+        runFile.read(reinterpret_cast<char*>(&eid), sizeof(int));
+        std::getline(runFile, ename, ',');
+        runFile.read(reinterpret_cast<char*>(&age), sizeof(int));
+        runFile.read(reinterpret_cast<char*>(&salary), sizeof(double));
+
+        cout <<"eid : " << eid <<"\n";
+        cout <<"ename : " << ename<<"\n";
+        cout <<"age : " << age<<"\n";
+        cout <<"salary : " << salary<<"\n";
+        eid = 123;
+        return Records(eid,ename,age,salary);
+
+    }
+    return Records();
+}
+
+
 
 
 //PASS 2
