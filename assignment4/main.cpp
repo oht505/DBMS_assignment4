@@ -47,15 +47,16 @@ void fillBufferFromFile(Records buffers[buffer_size], fstream &dataFile,int n, b
             empRecord = Grab_Emp_Record(dataFile);
             // For checking the total number of records
             buffers->number_of_emp_records++;
+
+            // No more records in the file
+            if(empRecord.no_values == -1){
+                break;
+            }
         }
         else {
             empRecord = getMinRecord(dataFile,i);
         }
 
-        // No more records in the file
-        if(empRecord.no_values == -1){
-            break;
-        }
 
         // Insert each field data into emp_record
         buffers[i].emp_record.age = empRecord.emp_record.age;
@@ -170,7 +171,7 @@ Records getMinRecord(fstream &runFile,int pageNum){
     runFile.read(reinterpret_cast<char*>(&salary), sizeof(double));
 
     if(minPointer == RecordNumInPage)
-        return Records(eid, ename, age,salary,-1);
+        return Records(2147483647, ename, age,salary,-1);
     else
         return Records(eid,ename,age,salary,0);
 }
