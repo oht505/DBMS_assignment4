@@ -37,6 +37,17 @@ int countNumRecordsInFile(istream& inputFile){
     return totalNumRecords;
 }
 
+void PrintBufferEmployeeInfo(int j){
+
+    cout<<"bufferIdx:"<<j<<"\n";
+
+    cout<<"eid:"<<buffers[j].emp_record.eid<<", ";
+    cout<<"ename:"<<buffers[j].emp_record.ename<<", ";
+    cout<<"age:"<<buffers[j].emp_record.age<<", ";
+    cout<<"salary:"<<buffers[j].emp_record.salary<<endl;
+
+}
+
 void fillBufferFromFile(Records buffers[buffer_size], fstream &dataFile,int n, bool isPassOne){
 
     // Grab 22 employ records from the file
@@ -57,26 +68,18 @@ void fillBufferFromFile(Records buffers[buffer_size], fstream &dataFile,int n, b
             empRecord = getMinRecord(dataFile,i);
         }
 
-
         // Insert each field data into emp_record
         buffers[i].emp_record.age = empRecord.emp_record.age;
         buffers[i].emp_record.eid = empRecord.emp_record.eid;
         buffers[i].emp_record.ename = empRecord.emp_record.ename;
         buffers[i].emp_record.salary = empRecord.emp_record.salary;
 
+        PrintBufferEmployeeInfo(i);
+
     }
 }
 
-void PrintBufferEmployeeInfo(){
-    for (int j=0; j<buffer_size; j++){
-        cout<<"bufferIdx:"<<j<<"\n";
 
-        cout<<"eid:"<<buffers[j].emp_record.eid<<", ";
-        cout<<"ename:"<<buffers[j].emp_record.ename<<", ";
-        cout<<"age:"<<buffers[j].emp_record.age<<", ";
-        cout<<"salary:"<<buffers[j].emp_record.salary<<endl;
-    }
-}
 
 static bool compareByEmployeeId(const Records& a, const Records& b){
     return a.emp_record.eid < b.emp_record.eid;
@@ -171,7 +174,7 @@ Records getMinRecord(fstream &runFile,int pageNum){
     runFile.read(reinterpret_cast<char*>(&salary), sizeof(double));
 
     if(minPointer == RecordNumInPage)
-        return Records(2147483647, ename, age,salary,-1);
+        return Records(pow(2,32)-1, "-1", -1,-1,-1);
     else
         return Records(eid,ename,age,salary,0);
 }
