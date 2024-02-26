@@ -23,6 +23,17 @@ using namespace std;
 Records buffers[buffer_size]; //use this class object of size 22 as your main memory
 Records getMinRecord(fstream &runFile,int pageNum);
 
+void flushBuffer(Records buffers[]){
+
+    // Empty buffer
+    for(int i=0; i<buffer_size; i++){
+
+        buffers[i].emp_record.age = 0;
+        buffers[i].emp_record.eid = 0;
+        buffers[i].emp_record.ename = "";
+        buffers[i].emp_record.salary = 0;
+    }
+}
 
 //====================PASS 1==========================
 int countNumRecordsInFile(istream& inputFile){
@@ -293,13 +304,14 @@ int main() {
         //1-1. Create an Run page in the file
         createRunPage(i*BLOCK_SIZE, Runs);
         //1-2. Fill buffer with 22 employee records
+        flushBuffer(buffers);
         fillBufferFromFile(buffers, empin,buffer_size, true);
         //1-3. Sort records in the buffer and write to the Run File
         Sort_Buffer(buffers, i*BLOCK_SIZE ,Runs);
     }
 
     //2. Use Merge_Runs() to Sort the runs of Emp relations
-    for(int i=0;i<399;i++){
+    for(int i=0;i<totalNumRecords;i++){
         Merge_Runs(Runs);
         PrintSorted(SortOut);
     }
