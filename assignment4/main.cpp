@@ -28,10 +28,10 @@ void flushBuffer(Records buffers[]){
     // Empty buffer
     for(int i=0; i<buffer_size; i++){
 
-        buffers[i].emp_record.age = 0;
-        buffers[i].emp_record.eid = 0;
+        buffers[i].emp_record.age = INT32_MAX;
+        buffers[i].emp_record.eid = INT32_MAX;
         buffers[i].emp_record.ename = "";
-        buffers[i].emp_record.salary = 0;
+        buffers[i].emp_record.salary = INT32_MAX;
     }
 }
 
@@ -111,37 +111,39 @@ string serialize(Records empInfo)
 }
 
 void writeRecordToFile(Records buffers[], int bufferIdx, int startOffset, fstream &runFile){
-    string serializedRecord = serialize(buffers[bufferIdx]);
-    int nextFreeSpace;
-    int RecordNumInPage;
-    int minPointer;
-    int recordLength = serializedRecord.size();
+    if (buffers[bufferIdx].emp_record.eid != INT32_MAX) {
 
-    // Get minPointer, RecordNumInpage, nextFreeSpace pointer
-    runFile.seekg(startOffset + BLOCK_SIZE - sizeof(int)*3);
-    runFile.read(reinterpret_cast<char*>(&minPointer), sizeof(int));
-    runFile.read(reinterpret_cast<char*>(&RecordNumInPage), sizeof(int));
-    runFile.read(reinterpret_cast<char*>(&nextFreeSpace), sizeof(int));
+        string serializedRecord = serialize(buffers[bufferIdx]);
+        int nextFreeSpace;
+        int RecordNumInPage;
+        int minPointer;
+        int recordLength = serializedRecord.size();
 
-    // Write the serialized record to the file
-    runFile.seekp(startOffset + nextFreeSpace);
-    runFile.write(serializedRecord.c_str(), serializedRecord.size());
+        // Get minPointer, RecordNumInpage, nextFreeSpace pointer
+        runFile.seekg(startOffset + BLOCK_SIZE - sizeof(int) * 3);
+        runFile.read(reinterpret_cast<char *>(&minPointer), sizeof(int));
+        runFile.read(reinterpret_cast<char *>(&RecordNumInPage), sizeof(int));
+        runFile.read(reinterpret_cast<char *>(&nextFreeSpace), sizeof(int));
+
+        // Write the serialized record to the file
+        runFile.seekp(startOffset + nextFreeSpace);
+        runFile.write(serializedRecord.c_str(), serializedRecord.size());
 
 
-    // Add slot (offset, recold)
-    runFile.seekp(startOffset + BLOCK_SIZE - (sizeof(int)*3 + sizeof(int)*2*(RecordNumInPage+1)));
-    runFile.write(reinterpret_cast<char*>(&nextFreeSpace), sizeof(int));
-    runFile.write(reinterpret_cast<char*>(&recordLength), sizeof(int));
+        // Add slot (offset, recold)
+        runFile.seekp(startOffset + BLOCK_SIZE - (sizeof(int) * 3 + sizeof(int) * 2 * (RecordNumInPage + 1)));
+        runFile.write(reinterpret_cast<char *>(&nextFreeSpace), sizeof(int));
+        runFile.write(reinterpret_cast<char *>(&recordLength), sizeof(int));
 
-    // Update the next free space pointer
-    nextFreeSpace += recordLength;
-    RecordNumInPage++;
+        // Update the next free space pointer
+        nextFreeSpace += recordLength;
+        RecordNumInPage++;
 
-    // Write the updated next free space poointer back to the file
-    runFile.seekp(startOffset + BLOCK_SIZE - sizeof(int)*2);
-    runFile.write(reinterpret_cast<const char*>(&RecordNumInPage), sizeof(int));
-    runFile.write(reinterpret_cast<const char*>(&nextFreeSpace), sizeof(int));
-
+        // Write the updated next free space poointer back to the file
+        runFile.seekp(startOffset + BLOCK_SIZE - sizeof(int) * 2);
+        runFile.write(reinterpret_cast<const char *>(&RecordNumInPage), sizeof(int));
+        runFile.write(reinterpret_cast<const char *>(&nextFreeSpace), sizeof(int));
+    }
 }
 
 void createRunPage(int startOffset, fstream &dataFile){
@@ -184,12 +186,11 @@ Records getMinRecord(fstream &runFile,int pageNum){
     runFile.read(reinterpret_cast<char*>(&age), sizeof(int));
     runFile.read(reinterpret_cast<char*>(&salary), sizeof(double));
 
-    if(minPointer == RecordNumInPage)
-        return Records(pow(2,32)-1, "-1", -1,-1,-1);
+    if(minPointer == RecordNumInPage+1)
+        return Records(INT32_MAX, "-1", -1,-1,-1);
     else
         return Records(eid,ename,age,salary,0);
 }
-
 
 int findMinIndexFromBuffer(){
     int minIdx=0; // Assuming the first buffer is the initial minimum
@@ -316,6 +317,7 @@ int main() {
         PrintSorted(SortOut);
     }
 
+    cout << totalNumRecords;
 
     //Please delete the temporary files (runs) after you've sorted the Emp.csv
     empin.close();
