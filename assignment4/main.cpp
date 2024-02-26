@@ -221,7 +221,7 @@ int main() {
     //Open file streams to read and write
     //Opening out the Emp.csv relation that we want to Sort
     fstream empin;
-    empin.open("Emp.csv", ios::in);
+    empin.open("Emp2.csv", ios::in);
     if(!empin.is_open()){
         cerr << "Error opening file"<<endl;
         return 1;
