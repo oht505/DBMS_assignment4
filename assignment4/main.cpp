@@ -29,6 +29,7 @@ int countNumRecordsInFile(istream& inputFile){
     int totalNumRecords = 0;
     string line;
 
+
     while(getline(inputFile, line, '\n')){
         totalNumRecords++;
     }
@@ -50,10 +51,12 @@ void fillBufferFromFile(Records buffers[buffer_size], fstream &dataFile,int n, b
         else {
             empRecord = getMinRecord(dataFile,i);
         }
+
         // No more records in the file
         if(empRecord.no_values == -1){
             break;
         }
+
         // Insert each field data into emp_record
         buffers[i].emp_record.age = empRecord.emp_record.age;
         buffers[i].emp_record.eid = empRecord.emp_record.eid;
@@ -65,6 +68,8 @@ void fillBufferFromFile(Records buffers[buffer_size], fstream &dataFile,int n, b
 
 void PrintBufferEmployeeInfo(){
     for (int j=0; j<buffer_size; j++){
+        cout<<"bufferIdx:"<<j<<"\n";
+
         cout<<"eid:"<<buffers[j].emp_record.eid<<", ";
         cout<<"ename:"<<buffers[j].emp_record.ename<<", ";
         cout<<"age:"<<buffers[j].emp_record.age<<", ";
@@ -164,14 +169,20 @@ Records getMinRecord(fstream &runFile,int pageNum){
     runFile.read(reinterpret_cast<char*>(&age), sizeof(int));
     runFile.read(reinterpret_cast<char*>(&salary), sizeof(double));
 
-    return Records(eid,ename,age,salary);
+    if(minPointer == RecordNumInPage)
+        return Records(eid, ename, age,salary,-1);
+    else
+        return Records(eid,ename,age,salary,0);
 }
 
 
 int findMinIndexFromBuffer(){
-    int minIdx=0;
-    for(int i=1; i<buffer_size; i++){
-        if(buffers[minIdx].emp_record.eid > buffers[i].emp_record.eid)
+    int minIdx=0; // Assuming the first buffer is the initial minimum
+    for(int i=0; i<19; i++){
+        if(buffers[minIdx].no_values == -1  && buffers[i].no_values == -1) {
+            continue;
+        }
+        else if(buffers[minIdx].emp_record.eid > buffers[i].emp_record.eid)
             minIdx= i;
     }
     return minIdx;
@@ -218,8 +229,10 @@ void Merge_Runs(fstream &runFile){
     return;
 }
 
+
 void PrintSorted(fstream &empSorted)   {
     //Store in EmpSorted.csv
+
     Records records = buffers[19];
     int eid = records.emp_record.eid;
     string ename = records.emp_record.ename;
@@ -228,9 +241,9 @@ void PrintSorted(fstream &empSorted)   {
 
     string serializedRecord = std::to_string(eid) + "," + ename + "," + std::to_string(age) + "," + std::to_string(salary) + "\n";
 
-    cout <<serializedRecord;
+    //cout <<serializedRecord;
     empSorted << serializedRecord;
-    empSorted.close();
+    //empSorted.close();
 }
 
 
@@ -257,8 +270,8 @@ int main() {
     empin.seekg(0, ios::beg);
 
     //Creating the EmpSorted.csv file where we will store our sorted results
-    fstream SortOut;
-    SortOut.open("EmpSorted.csv", ios::out | ios::app);
+    fstream SortOut("EmpSorted.csv", ios::in | ios:: trunc | ios::out | ios::binary);
+
     if(!SortOut.is_open()){
         cerr << "Error opening the file to write"<<endl;
         return 1;
@@ -282,9 +295,11 @@ int main() {
     }
 
     //2. Use Merge_Runs() to Sort the runs of Emp relations
+    for(int i=0;i<399;i++){
+        Merge_Runs(Runs);
+        PrintSorted(SortOut);
+    }
 
-    Merge_Runs(Runs);
-    PrintSorted(SortOut);
 
     //Please delete the temporary files (runs) after you've sorted the Emp.csv
     empin.close();
