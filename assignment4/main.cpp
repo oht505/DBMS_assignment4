@@ -33,6 +33,18 @@ int countNumRecordsInFile(istream& inputFile){
     return totalNumRecords;
 }
 
+void flushBuffer(Records buffers[]){
+
+    // Empty buffer        
+    for(int i=0; i<buffer_size; i++){
+
+        buffers[i].emp_record.age = 0;
+        buffers[i].emp_record.eid = 0;
+        buffers[i].emp_record.ename = "";
+        buffers[i].emp_record.salary = 0;
+    }
+}
+
 void FillBufferFromFile(Records buffers[], fstream &dataFile){
     
     // Grab 22 employ records from the file
@@ -130,6 +142,7 @@ void createRunPage(int startOffset, fstream &dataFile){
         
 }
 
+
 /***You can change return type and arguments as you want.***/
 //PASS 1
 //Sorting the buffers in main_memory and storing the sorted records into a temporary file (Runs) 
@@ -204,7 +217,7 @@ int main() {
     //Open file streams to read and write
     //Opening out the Emp.csv relation that we want to Sort
     fstream empin;
-    empin.open("Emp.csv", ios::in);
+    empin.open("Emp2.csv", ios::in);
     if(!empin.is_open()){
         cerr << "Error opening file"<<endl;
         return 1;
@@ -237,9 +250,11 @@ int main() {
     for(int i=0; i<totalNumPages; i++){
         //1-1. Create an Run page in the file
         createRunPage(i*BLOCK_SIZE, Runs);
-        //1-2. Fill buffer with 22 employee records
+        //1-2. Flush buffer
+        flushBuffer(buffers);
+        //1-3. Fill buffer with 22 employee records
         FillBufferFromFile(buffers, empin);
-        //1-3. Sort records in the buffer and write to the Run File
+        //1-4. Sort records in the buffer and write to the Run File
         Sort_Buffer(buffers, i*BLOCK_SIZE ,Runs);
     }
 
