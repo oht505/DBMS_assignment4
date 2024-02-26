@@ -31,6 +31,18 @@ class Records{
     int no_values = 0; //You can use this to check if you've don't have any more tuples
     int number_of_emp_records = 0; // Tracks number of emp_records you have on the buffer
 
+    //constructor
+    Records(int eid, string ename, int age, double salary,int no_values) {
+        emp_record.eid = eid;
+        emp_record.ename = ename;
+        emp_record.age = age;
+        emp_record.salary = salary;
+        this->no_values = no_values;
+    }
+    //default Controller
+    Records(){};
+
+
 };
 
 // Grab a single block from the Emp.csv file and put it inside the EmpRecord structure of the Records Class
@@ -58,5 +70,6 @@ Records Grab_Emp_Record(fstream &empin) {
         return emp;
     }
 }
+
 
 
