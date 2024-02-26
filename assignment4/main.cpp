@@ -38,10 +38,10 @@ void flushBuffer(Records buffers[]){
     // Empty buffer        
     for(int i=0; i<buffer_size; i++){
 
-        buffers[i].emp_record.age = 0;
-        buffers[i].emp_record.eid = 0;
+        buffers[i].emp_record.age = INT32_MAX;
+        buffers[i].emp_record.eid = INT32_MAX;
         buffers[i].emp_record.ename = "";
-        buffers[i].emp_record.salary = 0;
+        buffers[i].emp_record.salary = INT32_MAX;
     }
 }
 
@@ -97,6 +97,9 @@ string serialize(Records empInfo)
 }
 
 void writeRecordToFile(Records buffers[], int bufferIdx, int startOffset, fstream &runFile){
+
+    if (buffers[bufferIdx].emp_record.eid != INT32_MAX){
+        
     string serializedRecord = serialize(buffers[bufferIdx]);
     int nextFreeSpace;
     int RecordNumInPage;
@@ -113,7 +116,6 @@ void writeRecordToFile(Records buffers[], int bufferIdx, int startOffset, fstrea
     runFile.seekp(startOffset + nextFreeSpace);
     runFile.write(serializedRecord.c_str(), serializedRecord.size());
 
-
     // Add slot (offset, recold)
     runFile.seekp(startOffset + BLOCK_SIZE - (sizeof(int)*3 + sizeof(int)*2*(RecordNumInPage+1)));
     runFile.write(reinterpret_cast<char*>(&nextFreeSpace), sizeof(int));
@@ -127,6 +129,8 @@ void writeRecordToFile(Records buffers[], int bufferIdx, int startOffset, fstrea
     runFile.seekp(startOffset + BLOCK_SIZE - sizeof(int)*2);
     runFile.write(reinterpret_cast<const char*>(&RecordNumInPage), sizeof(int));
     runFile.write(reinterpret_cast<const char*>(&nextFreeSpace), sizeof(int));
+
+    }
            
 }
 
@@ -217,7 +221,7 @@ int main() {
     //Open file streams to read and write
     //Opening out the Emp.csv relation that we want to Sort
     fstream empin;
-    empin.open("Emp2.csv", ios::in);
+    empin.open("Emp.csv", ios::in);
     if(!empin.is_open()){
         cerr << "Error opening file"<<endl;
         return 1;
