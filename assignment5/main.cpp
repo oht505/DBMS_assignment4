@@ -261,16 +261,17 @@ Records getDeptRecordFromRun(fstream & runFile, int recordNum) {
     return records.initDeptRecord(did,dname,budget,managerid);
 }
 
-void changeEmp(Records buffers[buffer_size], fstream &empRun,int n){
-    for(int i=0; i<10; i++){
-        int recordNum =n*10 + i +1;
-        Records pageOneEmp = getEmpRecordFromRun(empRun, 0,recordNum);
-        Records pageTwoEmp = getEmpRecordFromRun(empRun, 1,recordNum);
-        if(pageOneEmp.emp_record.eid != INT32_MAX)
-            buffers[i] = pageOneEmp;
-        if(pageTwoEmp.emp_record.eid != INT32_MAX)
-            buffers[i+10] = pageTwoEmp;
+void changeEmp(Records buffers[buffer_size], fstream &empRun,int n, int pageNum){
+    int recordPerPage = (buffer_size-2)/pageNum;
+    for(int p =0; p<pageNum; p++){
+        for(int i=0; i<recordPerPage; i++){
+            int recordNum =n*recordPerPage + i +1;
+            Records empRecord = getEmpRecordFromRun(empRun, p,recordNum);
+            if(empRecord.emp_record.eid != INT32_MAX)
+                buffers[(p*recordPerPage)+i] = empRecord;
+        }
     }
+
 }
 
 void changeDept(Records buffers[buffer_size], fstream &deptRun,int recordNum){
@@ -292,10 +293,10 @@ void printBuffer(){
         cout << buffers[i].emp_record.salary<<"\n";
         cout << buffers[i].emp_record.age<<"\n";
     }
-//    cout << buffers[buffer_size-2].dept_record.did<<"\n";
-//    cout << buffers[buffer_size-2].dept_record.dname<<"\n";
-//    cout << buffers[buffer_size-2].dept_record.budget<<"\n";
-//    cout << buffers[buffer_size-2].dept_record.managerid<<"\n";
+    cout << buffers[buffer_size-2].dept_record.did<<"\n";
+    cout << buffers[buffer_size-2].dept_record.dname<<"\n";
+    cout << buffers[buffer_size-2].dept_record.budget<<"\n";
+    cout << buffers[buffer_size-2].dept_record.managerid<<"\n";
 
 }
 
@@ -305,41 +306,10 @@ void Merge_Join_Runs(fstream &empRun, fstream &deptRun){
     int recordNum = 1;
     int nForEmp =0;
     bool hasJoined= false;
-
-    Records empRecord;
-    Records deptRecord;
     flushBuffer(buffers);
-    changeEmp(buffers, empRun,nForEmp);
-    sortRecordsByEmployeeId();
-    changeDept(buffers, deptRun,recordNum);
-
+    changeEmp(buffers, empRun, 0,2);
+    //sortRecordsByEmployeeId();
     printBuffer();
-
-    for(int i=0; i<(buffer_size-2); i++){
-
-        empRecord = buffers[i];
-        deptRecord = buffers[buffer_size-2];
-//        cout << "empId : " << empRecord.emp_record.eid <<"\n";
-//        cout << "deptId : " << deptRecord.dept_record.managerid <<"\n";
-
-        if(empRecord.emp_record.eid == deptRecord.dept_record.managerid){
-            cout << "조인됨" <<empRecord.emp_record.eid<<"\n";
-            Records joinRecord(empRecord.emp_record, deptRecord.dept_record);
-            //PrintJoin();
-            changeDept(buffers,deptRun, ++recordNum);
-            i=0;
-            hasJoined =true;
-        }
-
-        if(i== buffer_size-3 && !hasJoined){
-            changeDept(buffers,deptRun,++recordNum);
-            i--;
-        }
-
-
-    }
-
-
     //and store the Joined new tuples using PrintJoin()
     return;
 }
@@ -431,7 +401,6 @@ int main() {
 
     //2. Use Merge_Join_Runs() to Join the runs of Dept and Emp relations
     Merge_Join_Runs(emp_runs,dept_runs);
-
 
     //Please delete the temporary files (runs) after you've joined both Emp.csv and Dept.csv
 

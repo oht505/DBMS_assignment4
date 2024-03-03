@@ -1,5 +1,6 @@
-/* This is a skeleton code for External Memory Sorting, you can make modifications as long as you meet 
-   all question requirements*/  
+/*
+ * Written by Tek &  Woonki
+ */
 
 #include <string>
 #include <ios>
@@ -24,10 +25,8 @@ Records buffers[buffer_size]; //use this class object of size 22 as your main me
 Records getMinRecord(fstream &runFile,int pageNum);
 
 void flushBuffer(Records buffers[]){
-
     // Empty buffer
     for(int i=0; i<buffer_size; i++){
-
         buffers[i].emp_record.age = INT32_MAX;
         buffers[i].emp_record.eid = INT32_MAX;
         buffers[i].emp_record.ename = "";
@@ -40,7 +39,6 @@ int countNumRecordsInFile(istream& inputFile){
     int totalNumRecords = 0;
     string line;
 
-
     while(getline(inputFile, line, '\n')){
         totalNumRecords++;
     }
@@ -48,16 +46,6 @@ int countNumRecordsInFile(istream& inputFile){
     return totalNumRecords;
 }
 
-void PrintBufferEmployeeInfo(int j){
-
-    cout<<"bufferIdx:"<<j<<"\n";
-
-    cout<<"eid:"<<buffers[j].emp_record.eid<<", ";
-    cout<<"ename:"<<buffers[j].emp_record.ename<<", ";
-    cout<<"age:"<<buffers[j].emp_record.age<<", ";
-    cout<<"salary:"<<buffers[j].emp_record.salary<<endl;
-
-}
 
 void fillBufferFromFile(Records buffers[buffer_size], fstream &dataFile,int n, bool isPassOne){
 
@@ -85,12 +73,10 @@ void fillBufferFromFile(Records buffers[buffer_size], fstream &dataFile,int n, b
         buffers[i].emp_record.ename = empRecord.emp_record.ename;
         buffers[i].emp_record.salary = empRecord.emp_record.salary;
 
-        PrintBufferEmployeeInfo(i);
+        //PrintBufferEmployeeInfo(i);
 
     }
 }
-
-
 
 static bool compareByEmployeeId(const Records& a, const Records& b){
     return a.emp_record.eid < b.emp_record.eid;
@@ -105,7 +91,7 @@ string serialize(Records empInfo)
     ostringstream serializedRecord;
     serializedRecord.write(reinterpret_cast<const char *>(&empInfo.emp_record.eid), sizeof(int));
     serializedRecord << empInfo.emp_record.ename <<",";
-    serializedRecord.write(reinterpret_cast<const char*>(&empInfo.emp_record.age), sizeof(int));                                                                 // serialize string bio, variable length
+    serializedRecord.write(reinterpret_cast<const char*>(&empInfo.emp_record.age), sizeof(int));// serialize string bio, variable length
     serializedRecord.write(reinterpret_cast<const char *>(&empInfo.emp_record.salary), sizeof(double));
     return serializedRecord.str();
 }
@@ -128,7 +114,6 @@ void writeRecordToFile(Records buffers[], int bufferIdx, int startOffset, fstrea
         // Write the serialized record to the file
         runFile.seekp(startOffset + nextFreeSpace);
         runFile.write(serializedRecord.c_str(), serializedRecord.size());
-
 
         // Add slot (offset, recold)
         runFile.seekp(startOffset + BLOCK_SIZE - (sizeof(int) * 3 + sizeof(int) * 2 * (RecordNumInPage + 1)));
@@ -159,6 +144,7 @@ void createRunPage(int startOffset, fstream &dataFile){
 
 
 //====================PASS 2==========================
+//get records with min eid from each frame.
 Records getMinRecord(fstream &runFile,int pageNum){
     int slotOffset;
     int recordLength;
@@ -194,7 +180,7 @@ Records getMinRecord(fstream &runFile,int pageNum){
 
 int findMinIndexFromBuffer(){
     int minIdx=0; // Assuming the first buffer is the initial minimum
-    for(int i=0; i<19; i++){
+    for(int i=0; i<buffer_size-3; i++){
         if(buffers[minIdx].no_values == -1  && buffers[i].no_values == -1) {
             continue;
         }
@@ -204,10 +190,11 @@ int findMinIndexFromBuffer(){
     return minIdx;
 }
 
+//move record with minimum eid to output buffer
 void moveMinToLast(fstream &runFile){
     int minIdx = findMinIndexFromBuffer();
     int minPointer;
-    buffers[19].emp_record = buffers[minIdx].emp_record;
+    buffers[buffer_size-3].emp_record = buffers[minIdx].emp_record;
 
     runFile.seekg((minIdx+1)*BLOCK_SIZE - sizeof(int)*3);
     runFile.read(reinterpret_cast<char*>(&minPointer), sizeof(int));
@@ -215,17 +202,13 @@ void moveMinToLast(fstream &runFile){
 
     runFile.seekg((minIdx+1)*BLOCK_SIZE - sizeof(int)*3);
     runFile.write(reinterpret_cast<char*>(&minPointer), sizeof(int));
-
 }
-
-
 
 /***You can change return type and arguments as you want.***/
 //PASS 1
 //Sorting the buffers in main_memory and storing the sorted records into a temporary file (Runs) 
 void Sort_Buffer(Records buffers[], int startOffset, fstream &runFile){
     //Remember: You can use only [AT MOST] 22 blocks for sorting the records / tuples and create the runs
-
     // Sort records in the buffer
     sortRecordsByEmployeeId();
     // Insert 22 records into the Run page in the file
@@ -240,7 +223,7 @@ void Sort_Buffer(Records buffers[], int startOffset, fstream &runFile){
 //which are already sorted in 'runs' of the relation Emp.csv
 void Merge_Runs(fstream &runFile){
     //and store the Sorted results of your Buffer using PrintSorted()
-    fillBufferFromFile(buffers,runFile,19,false);
+    fillBufferFromFile(buffers,runFile,buffer_size-3,false);
     moveMinToLast(runFile);
     return;
 }
@@ -248,8 +231,7 @@ void Merge_Runs(fstream &runFile){
 
 void PrintSorted(fstream &empSorted)   {
     //Store in EmpSorted.csv
-
-    Records records = buffers[19];
+    Records records = buffers[buffer_size-3];
     int eid = records.emp_record.eid;
     string ename = records.emp_record.ename;
     int age = records.emp_record.age;
@@ -295,7 +277,6 @@ int main() {
 
     //1. Create runs for Emp which are sorted using Sort_Buffer()
     fstream Runs("run", ios::in | ios:: trunc | ios::out | ios::binary);
-    Runs << std::fixed << std::setprecision(0) ;
     if(!Runs.is_open()){
         cerr << "Error opening the file to write" << endl;
         return 1;
@@ -316,8 +297,6 @@ int main() {
         Merge_Runs(Runs);
         PrintSorted(SortOut);
     }
-
-    cout << totalNumRecords;
 
     //Please delete the temporary files (runs) after you've sorted the Emp.csv
     empin.close();
