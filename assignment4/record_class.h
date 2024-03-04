@@ -1,5 +1,6 @@
-/* This is a skeleton code for External Memory Sorting, you can make modifications as long as you meet 
-   all question requirements*/  
+/*
+ * Written by Tek & Woonki
+ */
 /* This record_class.h contains the class Records, which can be used to store tuples form Emp.csv (stored
 in the EmpRecord).
 */
@@ -30,7 +31,6 @@ class Records{
 
     int no_values = 0; //You can use this to check if you've don't have any more tuples
     int number_of_emp_records = 0; // Tracks number of emp_records you have on the buffer
-    bool isPageEmpty = false;
 
     //constructor
     Records(int eid, string ename, int age, double salary,int no_values) {
@@ -40,9 +40,8 @@ class Records{
         emp_record.salary = salary;
         this->no_values = no_values;
     }
-    //default Controller
+    //default Constructor
     Records(){};
-
 
 };
 
