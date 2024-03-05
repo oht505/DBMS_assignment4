@@ -17,9 +17,10 @@ in the EmpRecords) and Dept.csv (Stored in DeptRecords) files.
 
 using namespace std;
 
+
 class Records{
-    public:
-    
+public:
+
     struct EmpRecord {
         int eid;
         string ename;
@@ -35,6 +36,26 @@ class Records{
     }dept_record;
 
     /*** You can add more variables if you want below ***/
+
+    Records(){};
+    Records(const EmpRecord& emp, const DeptRecord& dept) : emp_record(emp), dept_record(dept) {}
+
+    // Constructor for initializing EmpRecord
+    Records initEmpRecord(int eid, string ename, int age, double salary) {
+        emp_record.eid = eid;
+        emp_record.ename = ename;
+        emp_record.age = age;
+        emp_record.salary = salary;
+        return *this;
+    }
+    // Constructor for initializing DeptRecord
+    Records initDeptRecord(int did, string dname, double budget, int managerid) {
+        dept_record.did = did;
+        dept_record.dname = dname;
+        dept_record.budget = budget;
+        dept_record.managerid = managerid;
+        return *this;
+    }
 
     int no_values = 0; //You can use this to check if you've don't have any more tuples
     int number_of_emp_records = 0; // Tracks number of emp_records you have on the buffer
@@ -59,7 +80,7 @@ Records Grab_Emp_Record(fstream &empin) {
         getline(s, word, ',');
         emp.emp_record.salary = stod(word);
 
-        //Ensuring that you cannot use both structure (EmpEecord, DeptRecord) at the same memory block / time 
+        //Ensuring that you cannot use both structure (EmpEecord, DeptRecord) at the same memory block / time
         emp.dept_record.did = 0;
         emp.dept_record.dname = "";
         emp.dept_record.budget = 0;
@@ -88,7 +109,7 @@ Records Grab_Dept_Record(fstream &deptin) {
         getline(s, word, ',');
         dept.dept_record.managerid = stoi(word);
 
-        //Ensuring that you cannot use both structure (EmpEecord, DeptRecord) at the same memory block / time 
+        //Ensuring that you cannot use both structure (EmpEecord, DeptRecord) at the same memory block / time
         dept.emp_record.eid = 0;
         dept.emp_record.ename = "";
         dept.emp_record.age = 0;
