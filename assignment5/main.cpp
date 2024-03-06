@@ -1,5 +1,5 @@
 /* This is a skeleton code for Optimized Merge Sort, you can make modifications as long as you meet 
-   all question requirements*/
+   all question requirements*/  
 
 #include <string>
 #include <ios>
@@ -10,7 +10,7 @@
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
-#include <cmath>
+#include <cmath> 
 #include <algorithm>
 #include "record_class.h"
 
@@ -376,8 +376,8 @@ void Merge_Join_Runs(fstream &empRun, fstream &deptRun, int totalNumDeptRecord,f
     insertEmpToBuffer(buffers, empRun,empRecordNum);
     insertDeptToBuffer(buffers, deptRun,deptRecordNum);
 //    sortEmpRecords(ptrEmp,empAllocSize);
-    // sortDeptRecords(ptrDept,deptAllocSize);
-    // printBuffer();
+   // sortDeptRecords(ptrDept,deptAllocSize);
+   // printBuffer();
 
     while(totalNumDeptRecord>0){// dept 소진시 까지 while
         //printBuffer();
@@ -419,14 +419,19 @@ void Merge_Join_Runs(fstream &empRun, fstream &deptRun, int totalNumDeptRecord,f
             }
         }
     }
-
     //printBuffer();
-
     //and store the Joined new tuples using PrintJoin()
     return;
 }
 
-
+void eraseRuns(const char* filename){
+    // Attempt to remove the file
+    if (std::remove(filename) == 0) {
+        std::cout << "File " << filename << " has been successfully deleted.\n";
+    } else {
+        std::cerr << "Error deleting file " << filename << ".\n";
+    }
+}
 
 
 int main() {
@@ -484,7 +489,7 @@ int main() {
 
     //Creating the Join.csv file where we will store our joined results
     fstream joinout;
-    joinout.open("Join.csv", ios::out | ios::app);
+    joinout.open("Join.csv", ios::out | ios::app );
     if(!joinout.is_open()){
         cerr<<"Can't open file "<<"join.csv"<<endl;
     }
@@ -538,14 +543,12 @@ int main() {
     }
 
 
-
-
     //2. Use Merge_Join_Runs() to Join the runs of Dept and Emp relations
     Merge_Join_Runs(emp_runs,dept_runs,totalNumDeptRecords,joinout);
 
-
     //Please delete the temporary files (runs) after you've joined both Emp.csv and Dept.csv
+    eraseRuns("Emp_runs");
+    eraseRuns("Dept_runs");
 
-    return 0;
 
 }
